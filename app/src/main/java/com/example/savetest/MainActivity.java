@@ -9,20 +9,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     Button buttonSave;
     Button buttonLoad;
-
-    ArrayList<String> filenames = new ArrayList<String>();
+    boolean showhidden;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +25,9 @@ public class MainActivity extends AppCompatActivity {
         final TextView txtv = findViewById(R.id.textView);
         final EditText edittxt = findViewById(R.id.editText);
         final EditText nametext = findViewById(R.id.editText2);
+        showhidden = false;
 
-        loadfilenames();
+        updatenamelist();
 
         //button save
         buttonSave = findViewById(R.id.savebtn);
@@ -45,18 +40,7 @@ public class MainActivity extends AppCompatActivity {
                     outstream = openFileOutput(filename, Context.MODE_PRIVATE);
                     outstream.write(edittxt.getText().toString().getBytes());
                     outstream.close();
-                    if(!filenames.contains(filename)){
-                        filenames.add(filename);
-                        try {
-                            FileOutputStream namestream = openFileOutput("metadata", Context.MODE_APPEND);
-                            namestream.write((filename + "\n").getBytes());
-                            namestream.close();
-                        }
-                        catch (Exception e){
-                            Log.d("update", e.getMessage());
-                        }
-                        updatenamelist();
-                    }
+                    updatenamelist();
                 }
                 catch(Exception e) {
                     Log.d("debug", "file not found; creating new file");
@@ -103,45 +87,17 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void loadfilenames() {
-        TextView filelist = findViewById(R.id.filelist);
-
-        try {
-            //InputStream fin = getApplicationContext().getResources().getAssets().open("metadata");
-            FileInputStream fin = openFileInput("metadata");
-            BufferedReader in = new BufferedReader(new InputStreamReader(fin));
-            String line;
-            while ((line = in.readLine()) != null) {
-                filenames.add(line);
-            }
-
-            updatenamelist();
-        }
-        catch (Exception e){
-            Log.d("error1", e.getMessage());
-            e.printStackTrace();
-            //File file = new File(getFilesDir(), "metadata");
-            try {
-                //FileOutputStream outstream = new FileOutputStream(file);
-                FileOutputStream outstream = openFileOutput("metadata", Context.MODE_PRIVATE);
-                outstream.write("".getBytes());
-                outstream.close();
-            }
-            catch (Exception e2){
-                Log.d("error2", e2.getMessage());
-            }
-            filelist.setText("!!! No files !!!");
-        }
-    }
-
     private void updatenamelist() {
         String out = "";
-        TextView filelist = findViewById(R.id.filelist);
+        TextView list = findViewById(R.id.filelist);
 
-        for (int i = 0; i < filenames.size(); i++){
-            out += filenames.get(i) + "\n";
+        File[] filelist = getFilesDir().listFiles();
+        for (int i = 0; i < filelist.length; i++){
+            if(!filelist[i].getName().startsWith(".") || showhidden) {
+                out += filelist[i].getName() + "\n";
+            }
         }
-        filelist.setText(out);
+        list.setText(out);
     }
 
 
